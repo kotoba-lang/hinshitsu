@@ -50,8 +50,12 @@
               {:keys [exit err]} (sh/sh "compare" "-metric" "RMSE" baseline candidate diff-path)
               ;; ImageMagick's `compare` writes the metric to stderr and exits
               ;; 1 when the images differ at all (even a tiny amount), so exit
-              ;; code alone isn't pass/fail — the parsed distortion is.
-              distortion (some-> (re-find #"\(([\d.]+)\)" err) second parse-double)]
+              ;; code alone isn't pass/fail — the parsed distortion is. The
+              ;; normalized distortion in parens is scientific notation
+              ;; (e.g. "1.6277e-05") for near-identical images — exactly the
+              ;; common should-pass case — so the pattern must allow e/E/sign,
+              ;; not just digits and a dot.
+              distortion (some-> (re-find #"\(([0-9.eE+-]+)\)" err) second parse-double)]
           (cond
             (= exit 2)
             (h/evidence :failed ["mokushi/compare"] (str "compare failed: " err)

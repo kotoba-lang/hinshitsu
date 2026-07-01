@@ -52,3 +52,22 @@
        (make-png! candidate "B")
        (is (h/passed? (m/save-baseline! candidate baseline)))
        (is (h/passed? (m/compare! baseline candidate))))))
+
+#?(:clj
+   (deftest compare-large-nearly-identical-images-parses-scientific-notation-test
+     ;; Regression test (found via real manimani/mobile iOS screenshots):
+     ;; ImageMagick's `compare -metric RMSE` reports the normalized distortion
+     ;; in scientific notation (e.g. "1.6e-05") for large, near-identical
+     ;; images — exactly the common should-pass case a screen-sized capture
+     ;; hits after a 1-pixel anti-aliasing/rendering difference. A regex that
+     ;; only matches plain decimals (no e/E/sign) fails to parse this and
+     ;; wrongly reports :failed ("could not parse RMSE").
+     (let [dir (str (System/getProperty "java.io.tmpdir") "/hinshitsu-mokushi-test-" (System/nanoTime))
+           baseline (str dir "/baseline.png")
+           candidate (str dir "/candidate.png")]
+       (io/make-parents baseline)
+       (sh/sh "convert" "-size" "1200x2200" "xc:white" baseline)
+       (sh/sh "convert" baseline "-fill" "black" "-draw" "point 0,0" candidate)
+       (let [ev (m/compare! baseline candidate)]
+         (is (h/passed? ev) (pr-str ev))
+         (is (number? (get-in ev [:data :distortion])) (pr-str ev))))))
