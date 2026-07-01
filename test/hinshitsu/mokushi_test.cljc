@@ -1,0 +1,54 @@
+(ns hinshitsu.mokushi-test
+  "JVM/babashka only (shells out to ImageMagick `compare`), mirroring
+  mokushi.cljc's own :clj-only process functions."
+  #?(:clj
+     (:require [hinshitsu.core :as h]
+               [hinshitsu.mokushi :as m]
+               [clojure.java.io :as io]
+               [clojure.java.shell :as sh]
+               [clojure.test :refer [deftest is testing]])))
+
+#?(:clj
+   (defn- make-png! [path text]
+     ;; ImageMagick `convert` — same tool family as `compare`, already a
+     ;; project-wide dependency for icon generation (see manimani/cloud-itonami
+     ;; mobile scaffolds this session).
+     (io/make-parents path)
+     (sh/sh "convert" "-size" "64x64" "xc:white" "-gravity" "center"
+            "-annotate" "0" text path)))
+
+#?(:clj
+   (deftest compare-identical-images-passes-test
+     (let [dir (str (System/getProperty "java.io.tmpdir") "/hinshitsu-mokushi-test-" (System/nanoTime))
+           baseline (str dir "/baseline.png")
+           candidate (str dir "/candidate.png")]
+       (make-png! baseline "A")
+       (io/make-parents candidate)
+       (io/copy (io/file baseline) (io/file candidate))
+       (let [ev (m/compare! baseline candidate)]
+         (is (h/passed? ev) (pr-str ev))))))
+
+#?(:clj
+   (deftest compare-different-images-fails-test
+     (let [dir (str (System/getProperty "java.io.tmpdir") "/hinshitsu-mokushi-test-" (System/nanoTime))
+           baseline (str dir "/baseline.png")
+           candidate (str dir "/candidate.png")]
+       (make-png! baseline "A")
+       (make-png! candidate "Z")
+       (let [ev (m/compare! baseline candidate {:threshold 0.001})]
+         (is (h/failed? ev) (pr-str ev))
+         (is (pos? (get-in ev [:data :distortion])))))))
+
+#?(:clj
+   (deftest compare-missing-baseline-is-skipped-test
+     (let [ev (m/compare! "/nonexistent/hinshitsu-baseline.png" "/nonexistent/candidate.png")]
+       (is (h/skipped? ev)))))
+
+#?(:clj
+   (deftest save-baseline-then-compare-passes-test
+     (let [dir (str (System/getProperty "java.io.tmpdir") "/hinshitsu-mokushi-test-" (System/nanoTime))
+           candidate (str dir "/candidate.png")
+           baseline (str dir "/baselines/screen.png")]
+       (make-png! candidate "B")
+       (is (h/passed? (m/save-baseline! candidate baseline)))
+       (is (h/passed? (m/compare! baseline candidate))))))
