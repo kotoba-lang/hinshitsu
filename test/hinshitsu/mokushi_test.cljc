@@ -9,13 +9,23 @@
                [clojure.test :refer [deftest is testing]])))
 
 #?(:clj
+   (defn- text->fill
+     "Deterministic distinguishable fill color for `text` (same text -> same
+     color, different text -> different color). Avoids `-annotate`, which
+     silently no-ops (renders nothing, leaving a blank white square) when no
+     default font is configured -- that made every \"different\" image
+     compare identical to the baseline regardless of the text argument."
+     [text]
+     (format "hsl(%d,100%%,50%%)" (mod (reduce + (map int text)) 360))))
+
+#?(:clj
    (defn- make-png! [path text]
      ;; ImageMagick `convert` — same tool family as `compare`, already a
      ;; project-wide dependency for icon generation (see manimani/cloud-itonami
      ;; mobile scaffolds this session).
      (io/make-parents path)
-     (sh/sh "convert" "-size" "64x64" "xc:white" "-gravity" "center"
-            "-annotate" "0" text path)))
+     (sh/sh "convert" "-size" "64x64" "xc:white" "-fill" (text->fill text)
+            "-draw" "rectangle 16,16 48,48" path)))
 
 #?(:clj
    (deftest compare-identical-images-passes-test
