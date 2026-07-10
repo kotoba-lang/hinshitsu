@@ -32,6 +32,20 @@
                     (h/evidence :skipped ["y"] "not run")])]
     (is (h/passed? g))))
 
+(deftest gate-empty-evidence-fails-test
+  (testing "an empty evidence seq must not vacuously pass -- (empty? failed) and
+           (empty? missing-required) are both true when nothing was ever
+           submitted, which would otherwise report a clean 'all checks passed'
+           gate that actually ran zero checks"
+    (let [g (h/gate [])]
+      (is (h/failed? g))
+      (is (= "no evidence submitted" (:hinshitsu/detail g)))))
+  (testing "an all-:skipped evidence seq is still a legitimate pass -- :skipped
+           is deliberately non-blocking, unlike genuinely empty evidence"
+    (let [g (h/gate [(h/evidence :skipped ["x"] "not run")
+                      (h/evidence :skipped ["y"] "not run")])]
+      (is (h/passed? g)))))
+
 (deftest gate-required-checks-test
   (testing "missing required check fails the gate even with no explicit failures"
     (let [g (h/gate [(h/evidence :passed ["x"] "")]

@@ -53,11 +53,20 @@
          passed-checks (into #{} (mapcat :hinshitsu/checks) (filter passed? evidences))
          missing-required (when required-checks
                              (into [] (remove passed-checks) required-checks))
-         ok? (and (empty? failed) (empty? missing-required))]
+         ;; An empty evidence seq must not vacuously pass -- (empty? failed)
+         ;; and (empty? missing-required) are BOTH true when nothing was ever
+         ;; submitted, which would otherwise report "all checks passed" for a
+         ;; gate that ran zero checks (e.g. a misconfigured check list or an
+         ;; exception swallowed before any evidence was produced). An
+         ;; all-:skipped evidence seq is still a legitimate pass -- :skipped
+         ;; is deliberately non-blocking per this fn's own docstring -- so
+         ;; this only guards the genuinely-empty case.
+         ok? (and (seq evidences) (empty? failed) (empty? missing-required))]
      (evidence
       (if ok? :passed :failed)
       (into [] (mapcat :hinshitsu/checks) evidences)
       (cond
+        (empty? evidences) "no evidence submitted"
         (seq failed) (str (count failed) " check(s) failed")
         (seq missing-required) (str "missing required evidence: " (str/join ", " missing-required))
         :else "all checks passed")
