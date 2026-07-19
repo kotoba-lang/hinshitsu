@@ -30,6 +30,23 @@ not just "did it launch."
 | `hinshitsu.core` | `evidence` / `passed?` / `failed?` / `skipped?` constructors and predicates; `gate` (aggregate many evidence maps into one pass/fail decision, optionally requiring specific check names); `coverage` (implemented/partial/missing maturity assessment) |
 | `hinshitsu.mokushi` | `capture!` (run a caller-supplied screenshot command), `compare!` (ImageMagick `compare -metric RMSE` against a committed baseline, threshold-gated), `check!` (capture + compare in one call), `save-baseline!` (deliberate baseline promotion) |
 
+## iOS simulator visual QA CLI
+
+`bin/hinshitsu-ios-visual-qa` is the shared executable contract for native iOS
+simulator visual checks. It requires a successful app launch before capture,
+rejects black screens, compares RMSE against a baseline, applies hard timeouts,
+and emits a `hinshitsu.ios-visual.v0` JSON receipt.
+
+```bash
+bin/hinshitsu-ios-visual-qa \
+  --bundle-id jp.co.example.app \
+  --baseline test/visual/ios.png \
+  --candidate target/visual/ios-current.png
+```
+
+App repositories should keep only a thin wrapper supplying their bundle ID and
+paths. The shared CLI never installs, signs, submits, or changes a baseline.
+
 ## Contract
 
 ```clojure
