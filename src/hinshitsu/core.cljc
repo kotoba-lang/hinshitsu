@@ -8,7 +8,7 @@
 
   Pure data + pure functions. No filesystem, no process, no network — those
   live in the caller (or in a sibling namespace like `hinshitsu.mokushi`)."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def schema "hinshitsu.evidence.v0")
 
