@@ -72,7 +72,7 @@ call).
 ## Verify
 
 ```bash
-clojure -M:test
+kbb -M:test
 ```
 
 `hinshitsu.mokushi`'s `capture!`/`compare!`/`save-baseline!` are `:clj`/`:bb`
