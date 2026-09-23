@@ -6,7 +6,7 @@
                [hinshitsu.mokushi :as m]
                [clojure.java.io :as io]
                [clojure.java.shell :as sh]
-               [clojure.test :refer [deftest is testing]])))
+               [kotoba.test :refer [deftest is testing]])))
 
 #?(:clj
    (defn- text->fill
