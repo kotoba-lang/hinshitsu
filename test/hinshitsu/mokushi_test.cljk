@@ -5,7 +5,7 @@
      (:require [hinshitsu.core :as h]
                [hinshitsu.mokushi :as m]
                [clojure.java.io :as io]
-               [clojure.java.shell :as sh]
+               [kotoba.process :as sh]
                [kotoba.test :refer [deftest is testing]])))
 
 #?(:clj
